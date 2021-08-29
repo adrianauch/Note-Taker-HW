@@ -2,8 +2,8 @@
 
 Application is deployed links:
 
-Heroku:
-Github:
+Heroku: https://agile-woodland-92654.herokuapp.com/
+Github: https://adrianauch.github.io/Note-Taker-HW/
 
 ## Description:
 
