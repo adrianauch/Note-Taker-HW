@@ -3,7 +3,8 @@ const express = require("express");
 const path = require("path");
 const fs = require("fs");
 const util = require("util");
-const { randomUUID } = require("crypto");
+// Helper method for generating unique ids
+const uuid = require("./helpers/helper");
 
 // section for PORT (boiler plate using Heroku)
 const PORT = process.env.PORT || 3001;
@@ -16,33 +17,6 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(express.static("public"));
 
-// create promose object to read file
-const readFromFile = util.promisify(fs.readFile);
-
-// function to write data to json file
-// destination is wthe file you want to write to
-// content is what you want to put in teh file
-const writeToFile = (destination, content) =>
-  fs.writeFile(destination, JSON.stringify(content, null, 2), (err) =>
-    err ? console.log(err) : console.info(`\n Data written to ${destinatiom}`)
-  );
-
-// function to read data and append content
-// content = what you want to append to the file
-// file the path to the file you want to save
-
-const readnwrite = (content, file) => {
-  fs.readFile(file, "utf8", (err, data) => {
-    if (err) {
-      console.info(err);
-    } else {
-      const parsedData = JSON.parse(data);
-      parsedData.push(content);
-      writeToFile(file, parsedData);
-    }
-  });
-};
-
 // GET route to return notes.html
 app.get("/notes", (req, res) => {
   res.sendFile(path.join(__dirname, "/public/notes.html"));
@@ -53,36 +27,72 @@ app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "/public/index.html"));
 });
 
-// GET to return the api/notes file
-app.get("/api/notes", (req, res) => {
-  console.info(`${req.method} requested received for notes`);
+// API GET Request
+app.get("/api/db", (req, res) => {
+  console.info(`${req.method} request received for feedback`);
+
   readFromFile("./db/db.json").then((data) => res.json(JSON.parse(data)));
 });
 
-// POST
-// format on db.json
-// [
-//     {
-//         "title":"Test Title",
-//         "text":"Test text"
-//     }
-// ]
+// functions to read and write file:
+// Promise version of fs.readFile - promisify allows the fs read file to use promise objects- so we can use .then on methods.
+const readFromFile = util.promisify(fs.readFile);
 
+/**
+ *  Function to write data to the JSON file given a destination and some content
+ *  @param {string} destination The file you want to write to.
+ *  @param {object} content The content you want to write to the file.
+ *  @returns {void} Nothing
+ */
+const writeToFile = (destination, content) =>
+  fs.writeFile(destination, JSON.stringify(content, null, 4), (err) =>
+    err ? console.error(err) : console.info(`\nData written to ${destination}`)
+  );
+
+/**
+ *  Function to read data from a given a file and append some content
+ *  @param {object} content The content you want to append to the file.
+ *  @param {string} file The path to the file you want to save to.
+ *  @returns {void} Nothing
+ */
+const readAndAppend = (content, file) => {
+  fs.readFile(file, "utf8", (err, data) => {
+    if (err) {
+      console.error(err);
+    } else {
+      const parsedData = JSON.parse(data);
+      parsedData.push(content);
+      writeToFile(file, parsedData);
+    }
+  });
+};
+// API POST
 app.post("/api/notes", (req, res) => {
-  console.info(`${req.method} request recieved to add a note`);
-  // destructure object to pull out info we need
+  // Log that a POST request was received
+  console.info(`${req.method} request received to submit note`);
+
+  // Destructuring assignment for the items in req.body
   const { title, text } = req.body;
 
-  if (req.body) {
+  // If all the required properties are present
+  if (title && text) {
+    // Variable for the object we will save
     const newNote = {
       title,
       text,
-      note_id: randomUUID(),
+      id: uuid(),
     };
-    readnwrite(newNote, "./db/db.json");
-    res.json("Your note as been added");
+
+    readAndAppend(newNote, "./db/db.json");
+
+    const response = {
+      status: "success",
+      body: newNote,
+    };
+
+    res.json(response);
   } else {
-    res.error("an error had occurred");
+    res.json("Error in posting note");
   }
 });
 
