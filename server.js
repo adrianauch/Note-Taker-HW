@@ -5,6 +5,7 @@ const fs = require("fs");
 const util = require("util");
 // Helper method for generating unique ids
 const uuid = require("./helpers/helper");
+const { response } = require("express");
 
 // section for PORT (boiler plate using Heroku)
 const PORT = process.env.PORT || 3001;
@@ -17,6 +18,13 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(express.static("public"));
 
+// API GET
+app.get("/api/notes", (req, res) => {
+  console.info(`${req.method} request received for feedback`);
+
+  readFromFile("./db/db.json").then((data) => res.json(JSON.parse(data)));
+});
+
 // GET route to return notes.html
 app.get("/notes", (req, res) => {
   res.sendFile(path.join(__dirname, "/public/notes.html"));
@@ -25,13 +33,6 @@ app.get("/notes", (req, res) => {
 // GET route return index.html
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "/public/index.html"));
-});
-
-// API GET Request
-app.get("/api/db", (req, res) => {
-  console.info(`${req.method} request received for feedback`);
-
-  readFromFile("./db/db.json").then((data) => res.json(JSON.parse(data)));
 });
 
 // functions to read and write file:
