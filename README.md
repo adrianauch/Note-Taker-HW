@@ -2,7 +2,7 @@
 
 Application is deployed links:
 
-Heroku: https://agile-woodland-92654.herokuapp.com/
+Heroku: https://frozen-cliffs-46534.herokuapp.com/
 Github: https://adrianauch.github.io/Note-Taker-HW/
 
 ## Description:
